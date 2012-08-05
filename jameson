@@ -20,7 +20,7 @@ my @plugins = __PACKAGE__->plugins;
 
 my $HOST = "localhost";
 my $PORT = 6667;
-my $NICK = "Jameson";
+my $NICK = "jameson";
 my $CHANNEL = "#test";
 
 my $c = AnyEvent->condvar;
