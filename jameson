@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+
+package jameson;
+
+use 5.016;
+use warnings;
+use strict;
+
+use FindBin;
+use lib "$FindBin::Bin/lib";
+
+use AnyEvent;
+use AnyEvent::IRC::Client;
+
+use Module::Pluggable
+    instantiate => "new",
+    search_path => "jameson::plugin";
+
+my @plugins = __PACKAGE__->plugins;
+
+my $HOST = "localhost";
+my $PORT = 6667;
+my $NICK = "Jameson";
+my $CHANNEL = "#test";
+
+my $c = AnyEvent->condvar;
+
+my $timer;
+my $con = new AnyEvent::IRC::Client;
+
+$con->reg_cb(
+    registered => sub {
+        $con->send_srv(JOIN => $CHANNEL);
+    },
+    disconnect => sub {
+        $c->broadcast;
+    },
+    publicmsg => sub {
+        my $ircmsg = pop @_;
+        my ($channel, $msg) = @{$ircmsg->{params}};
+        my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
+        my ($text) = $msg =~ m/^$NICK\b.?\s+(.*)/i;
+
+        my $direct = 1;
+        if (not $text) {
+            $text = $msg;
+            $direct = 0;
+        }
+
+        for my $plugin (@plugins) {
+            $plugin->publicmsg($con, $channel, $from, $text, $direct) if $plugin->can("publicmsg");
+        }
+    },
+);
+
+$con->connect ($HOST, $PORT, { nick => $NICK });
+$c->wait;
+$con->disconnect;
+
+
+package jameson::plugin;
+
+sub new {
+    my ($class) = @_;
+
+    return bless \do {my $dummy}, $class;
+}
