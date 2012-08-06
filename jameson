@@ -69,6 +69,33 @@ $c->wait;
 $con->disconnect;
 
 
+package jameson::util;
+
+use AnyEvent::HTTP;
+
+sub shorten {
+    state %cache;
+
+    my ($url, $cb) = @_;
+
+    if ($cache{url}) {
+        $cb->($cache{url});
+    }
+    else {
+        http_get("http://is.gd/create.php?url=$url&format=simple", sub {
+            my ($body, $hdr) = @_;
+            if ($hdr->{Status} =~ m/^2/) {
+                $cache{$url} = $body;
+                $cb->($body);
+            }
+            else {
+                $cb->($url);
+            }
+        });
+    }
+}
+
+
 package jameson::plugin;
 
 sub new {
