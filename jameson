@@ -18,10 +18,12 @@ use Module::Pluggable
 
 my @plugins = __PACKAGE__->plugins;
 
-my $HOST = "localhost";
-my $PORT = 6667;
-my $NICK = "jameson";
-my $CHANNEL = "#test";
+if (@ARGV < 4) {
+    say "usage: jameson <host> <port> <nick> <channel> [<nickserv pass>]";
+    exit 1;
+}
+
+my ($HOST, $PORT, $NICK, $CHANNEL, $NSPASS) = @ARGV;
 
 my $c = AnyEvent->condvar;
 
@@ -30,6 +32,7 @@ my $con = new AnyEvent::IRC::Client;
 
 $con->reg_cb(
     registered => sub {
+        $con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS") if $NSPASS;
         $con->send_srv(JOIN => $CHANNEL);
     },
     disconnect => sub {
