@@ -6,6 +6,7 @@ use strict;
 
 use base 'jameson::plugin';
 
+use List::MoreUtils qw(uniq);
 use AnyEvent::HTTP;
 use JSON;
 
@@ -16,7 +17,7 @@ my %shorturl_cache;
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
-    my @issues = $text =~ m/#(\d+)/g;
+    my @issues = uniq map { 0+$_} $text =~ m/#(\d+)/g;
     for my $issue (@issues) {
         http_get("$ISSUE_BASE/$issue", sub {
             my ($body, $hdr) = @_;
