@@ -16,9 +16,6 @@ my %shorturl_cache;
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
-    use Data::Dumper;
-    print Dumper \%shorturl_cache;
-
     my @issues = $text =~ m/#(\d+)/g;
     for my $issue (@issues) {
         http_get("$ISSUE_BASE/$issue", sub {
