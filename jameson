@@ -50,7 +50,7 @@ $con->reg_cb(
         my $ircmsg = pop @_;
         my ($channel, $msg) = @{$ircmsg->{params}};
         my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
-        my ($text) = $msg =~ m/^$NICK\b.?\s+(.*)/i;
+        my ($text) = $msg =~ m/^$NICK\b.?\s*(.*)/i;
 
         my $direct = 1;
         if (not $text) {
