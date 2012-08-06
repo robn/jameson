@@ -30,6 +30,8 @@ my $c = AnyEvent->condvar;
 my $timer;
 my $con = new AnyEvent::IRC::Client;
 
+my $joined = 0;
+
 $con->reg_cb(
     registered => sub {
         $con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS") if $NSPASS;
@@ -38,7 +40,13 @@ $con->reg_cb(
     disconnect => sub {
         $c->broadcast;
     },
+    join => sub {
+        return if not pop @_;
+        $joined = 1;
+    },
     publicmsg => sub {
+        return if not $joined;
+
         my $ircmsg = pop @_;
         my ($channel, $msg) = @{$ircmsg->{params}};
         my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
