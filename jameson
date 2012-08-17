@@ -59,7 +59,7 @@ $con->reg_cb(
         }
 
         for my $plugin (@plugins) {
-            $plugin->publicmsg($con, $channel, $from, $text, $direct) if $plugin->can("publicmsg");
+            $plugin->publicmsg($con, $channel, $from, $text, $direct) if $plugin->can("publicmsg") and $plugin->enabled;
         }
     },
 );
@@ -103,3 +103,5 @@ sub new {
 
     return bless \do {my $dummy}, $class;
 }
+
+sub enabled { 1 }

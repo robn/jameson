@@ -10,6 +10,8 @@ use Chatbot::Eliza;
 
 my $eliza = Chatbot::Eliza->new;
 
+sub enabled { 0 }
+
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
     return if not $direct;
