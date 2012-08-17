@@ -28,7 +28,10 @@ sub publicmsg {
 
                 my $type = $data->{pull_request}->{diff_url} ? "PR" : "Issue";
 
-                my $msg = "$type #$issue: $data->{title} $shorturl";
+                my $labels = join ' / ', map { $_->{name} } @{$data->{labels}};
+
+                my $msg = "$type #$issue [$data->{state}]: $data->{title} $shorturl";
+                $msg .= " [ $labels ]" if $labels;
 
                 $con->send_srv(PRIVMSG => $channel, $msg);
             });
