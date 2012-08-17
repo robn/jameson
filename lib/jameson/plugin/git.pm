@@ -18,7 +18,7 @@ my $r = Git::Repository->new(work_tree => $GIT_PATH);
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
-    my @refs = uniq map { lc } $text =~ m/\@([0-9a-fA-F]+)\b/g;
+    my @refs = uniq map { lc } $text =~ m/(?:^|\s)\@([0-9a-fA-F]+)(?:\s|$)/g;
 
     for my $ref (@refs) {
         my $line = try { $r->run("log", $ref, "-n1", "--pretty=format:%h,%H,%cn,%s") };
