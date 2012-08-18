@@ -9,6 +9,7 @@ use base 'jameson::plugin';
 use AnyEvent::HTTP;
 use URI::Find;
 use HTML::TreeBuilder 5 -weak;
+use Text::Unidecode;
 
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
@@ -28,7 +29,8 @@ sub publicmsg {
             }
 
             if ($title) {
-                $con->send_srv(PRIVMSG => $channel, "[ $title ]");
+                my $fixed = unidecode($title);
+                $con->send_srv(PRIVMSG => $channel, "[ $fixed ]");
             }
         });
     }
