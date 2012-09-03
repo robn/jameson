@@ -3,6 +3,7 @@ package jameson::plugin::github;
 use 5.016;
 use warnings;
 use strict;
+use re 'debug';
 
 use base 'jameson::plugin';
 
@@ -15,7 +16,8 @@ my $ISSUE_BASE = "https://api.github.com/repos/pioneerspacesim/pioneer/issues";
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
-    my @issues = uniq map { 0+$_} $text =~ m/(?:^|\s)#(\d+)(?:\s|$)/g;
+    my @issues = uniq map { 0+$_} $text =~ m/(?:\G|^|[\s\W])#(\d+)(?=$|[\s\W])/g;
+
     for my $issue (@issues) {
         http_get("$ISSUE_BASE/$issue", sub {
             my ($body, $hdr) = @_;
