@@ -18,6 +18,10 @@ use Module::Pluggable
 
 my @plugins = __PACKAGE__->plugins;
 
+for my $plugin (@plugins) {
+    $plugin->init if $plugin->enabled;
+}
+
 if (@ARGV < 4) {
     say "usage: jameson <host> <port> <nick> <channel> [<nickserv pass>]";
     exit 1;
@@ -103,5 +107,7 @@ sub new {
 
     return bless \do {my $dummy}, $class;
 }
+
+sub init {}
 
 sub enabled { 1 }
