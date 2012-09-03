@@ -3,7 +3,6 @@ package jameson::plugin::github;
 use 5.016;
 use warnings;
 use strict;
-use re 'debug';
 
 use base 'jameson::plugin';
 
