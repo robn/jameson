@@ -30,7 +30,7 @@ sub publicmsg {
     }
 
     while (my ($who, $updown) = $text =~ m/\G.*?(\w+)\s*(\+\+|--)/gc) {
-        $karma{$who} += $updown eq '++' ? 1 : -1;
+        $karma{lc $who} += $updown eq '++' ? 1 : -1;
 		store \%karma, $karmafile;
     }
 }
