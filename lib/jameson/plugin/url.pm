@@ -36,4 +36,6 @@ sub publicmsg {
     }
 }
 
+sub enabled { 0 }
+
 1;
