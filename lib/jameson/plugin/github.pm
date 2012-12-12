@@ -18,6 +18,8 @@ sub publicmsg {
     my @issues = uniq map { 0+$_} $text =~ m/(?:\G|^|[\s\W])#(\d+)(?=$|[\s\W])/g;
 
     for my $issue (@issues) {
+        $self->log("fetching issue #$issue");
+
         http_get("$ISSUE_BASE/$issue", sub {
             my ($body, $hdr) = @_;
             return unless $hdr->{Status} =~ m/^2/;
@@ -33,6 +35,8 @@ sub publicmsg {
 
                 my $msg = "$type #$issue [$data->{state}]: $data->{title} $shorturl";
                 $msg .= " [ $labels ]" if $labels;
+
+                $self->log($msg);
 
                 $con->send_srv(PRIVMSG => $channel, $msg);
             });

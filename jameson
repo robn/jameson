@@ -10,6 +10,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use AnyEvent;
+use AnyEvent::Log;
 use AnyEvent::IRC::Client;
 
 use Module::Pluggable
@@ -30,6 +31,9 @@ if (@ARGV < 4) {
 my ($HOST, $PORT, $NICK, $CHANNELS, $NSPASS) = @ARGV;
 my @CHANNELS = split ',', $CHANNELS;
 
+AnyEvent::Log::ctx->log_cb(sub { print STDOUT shift; 0 });
+my $log = AnyEvent::Log::logger("info");
+
 my $c = AnyEvent->condvar;
 
 my $timer;
@@ -39,21 +43,34 @@ my %joined;
 
 $con->reg_cb(
     registered => sub {
-        $con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS") if $NSPASS;
-        $con->send_srv(JOIN => $_) for @CHANNELS;
+		$log->("registered");
+		if ($NSPASS) {
+			$log->("identifying ourselves to NickServ");
+			$con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS");
+		}
+		for my $channel (@CHANNELS) {
+			$log->("joining $channel");
+			$con->send_srv(JOIN => $channel);
+		}
     },
     disconnect => sub {
+		$log->("disconnected, signalling shutdown");
         $c->broadcast;
     },
     join => sub {
         return if not pop @_;
-        $joined{pop @_} = 1;
+		my $channel = pop @_;
+		$log->("joined $channel");
+        $joined{$channel} = 1;
     },
     publicmsg => sub {
         my $ircmsg = pop @_;
         my ($channel, $msg) = @{$ircmsg->{params}};
 
-        return if not $joined{$channel};
+		if (not $joined{$channel}) {
+			$log->("got message on $channel, but not joined, ignoring: $msg");
+			return;
+		}
 
         my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
         my ($text) = $msg =~ m/^$NICK\b.?\s*(.*)/i;
@@ -70,9 +87,19 @@ $con->reg_cb(
     },
 );
 
+$log->("connecting to $HOST:$PORT as $NICK");
+                                                                                                ;
 $con->connect ($HOST, $PORT, { nick => $NICK });
+
+$log->("entering main loop");
+
 $c->wait;
+
+$log->("shutdown triggered");
+
 $con->disconnect;
+
+$log->("exiting");
 
 
 package jameson::util;
@@ -108,6 +135,12 @@ sub new {
     my ($class) = @_;
 
     return bless \do {my $dummy}, $class;
+}
+
+sub log {
+    my ($self, $msg) = @_;
+    my ($plugin) = ref($self) =~ m/::([^:]+)$/;
+    $log->("$plugin: $msg");
 }
 
 sub enabled { 1 }
