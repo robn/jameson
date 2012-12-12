@@ -23,36 +23,38 @@ for my $plugin (@plugins) {
 }
 
 if (@ARGV < 4) {
-    say "usage: jameson <host> <port> <nick> <channel> [<nickserv pass>]";
+    say "usage: jameson <host> <port> <nick> <channels> [<nickserv pass>]";
     exit 1;
 }
 
-my ($HOST, $PORT, $NICK, $CHANNEL, $NSPASS) = @ARGV;
+my ($HOST, $PORT, $NICK, $CHANNELS, $NSPASS) = @ARGV;
+my @CHANNELS = split ',', $CHANNELS;
 
 my $c = AnyEvent->condvar;
 
 my $timer;
 my $con = new AnyEvent::IRC::Client;
 
-my $joined = 0;
+my %joined;
 
 $con->reg_cb(
     registered => sub {
         $con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS") if $NSPASS;
-        $con->send_srv(JOIN => $CHANNEL);
+        $con->send_srv(JOIN => $_) for @CHANNELS;
     },
     disconnect => sub {
         $c->broadcast;
     },
     join => sub {
         return if not pop @_;
-        $joined = 1;
+        $joined{pop @_} = 1;
     },
     publicmsg => sub {
-        return if not $joined;
-
         my $ircmsg = pop @_;
         my ($channel, $msg) = @{$ircmsg->{params}};
+
+        return if not $joined{$channel};
+
         my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
         my ($text) = $msg =~ m/^$NICK\b.?\s*(.*)/i;
 
