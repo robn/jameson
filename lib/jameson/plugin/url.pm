@@ -9,7 +9,6 @@ use base 'jameson::plugin';
 use AnyEvent::HTTP;
 use URI::Find;
 use HTML::TreeBuilder 5 -weak;
-use Text::Unidecode;
 
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
@@ -38,9 +37,7 @@ sub publicmsg {
 
             if ($title) {
                 $self->log("extracted title: $title");
-
-                my $fixed = unidecode($title);
-                $con->send_srv(PRIVMSG => $channel, "[ $fixed ]");
+                $con->send_srv(PRIVMSG => $channel, "[ $title ]");
             }
             else {
                 $self->log("no title found");
