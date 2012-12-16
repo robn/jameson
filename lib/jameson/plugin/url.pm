@@ -32,7 +32,10 @@ sub publicmsg {
             my $title = $hdr->{Title};
             unless ($title) {
                 my $elem = HTML::TreeBuilder->new_from_content($chunk)->find_by_tag_name("title");
-                $title = $elem->as_trimmed_text if $elem;
+                if ($elem) {
+                    my $raw_title = $elem->as_trimmed_text;
+                    $title = do { open my $fh, '<', \$raw_title; binmode $fh; <$fh> } if $raw_title;
+                }
             }
 
             if ($title) {
