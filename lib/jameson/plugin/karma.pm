@@ -12,6 +12,8 @@ use Lingua::EN::Inflect qw(inflect);
 my %karma;
 my $karmafile = "karma.db";
 
+my $nickre = qr/[\w\-+]+/;
+
 sub init {
 	%karma = eval { %{retrieve $karmafile} };
 }
@@ -20,7 +22,7 @@ sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
     if ($direct) {
-        my ($who) = $text =~ m/karma\s+(\w+)/i;
+        my ($who) = $text =~ m/karma\s+($nickre)/i;
         return unless $who;
 
         my $karma = $karma{lc $who} // 0;
@@ -29,7 +31,7 @@ sub publicmsg {
         return;
     }
 
-    while (my ($who, $updown) = $text =~ m/\G.*?(\w+)\s*(\+\+|--)/gc) {
+    while (my ($who, $updown) = $text =~ m/\G.*?($nickre)\s*(\+\+|--)/gc) {
         $karma{lc $who} += $updown eq '++' ? 1 : -1;
 		store \%karma, $karmafile;
     }
