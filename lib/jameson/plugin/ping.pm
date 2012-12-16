@@ -12,6 +12,8 @@ sub publicmsg {
 
     return unless $text =~ m/^\s*ping\s*$/;
 
+    $self->log("replying to $from");
+
     $con->send_srv(PRIVMSG => $channel, "$from: pong");
 }
 
