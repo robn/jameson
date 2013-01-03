@@ -15,6 +15,8 @@ my $GIT_PATH = "$FindBin::Bin/git/pioneer";
 
 my $r = Git::Repository->new(work_tree => $GIT_PATH);
 
+sub enabled { 0 }
+
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
