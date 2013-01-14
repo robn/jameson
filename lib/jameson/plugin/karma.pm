@@ -15,7 +15,7 @@ my $karmafile = "karma.db";
 my $nickre = qr/[\w\-+]+/;
 
 sub init {
-	%karma = eval { %{retrieve $karmafile} };
+    %karma = eval { %{retrieve $karmafile} };
 }
 
 sub publicmsg {
@@ -33,7 +33,7 @@ sub publicmsg {
 
     while (my ($who, $updown) = $text =~ m/\G.*?($nickre)\s*(\+\+|--)/gc) {
         $karma{lc $who} += $updown eq '++' ? 1 : -1;
-		store \%karma, $karmafile;
+        store \%karma, $karmafile;
     }
 }
 

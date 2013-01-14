@@ -43,48 +43,48 @@ my %joined;
 
 $con->reg_cb(
     registered => sub {
-		$log->("registered");
-		if ($NSPASS) {
-			$log->("identifying ourselves to NickServ");
-			$con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS");
-		}
-		for my $channel (@CHANNELS) {
-			$log->("joining $channel");
-			$con->send_srv(JOIN => $channel);
-		}
+        $log->("registered");
+        if ($NSPASS) {
+            $log->("identifying ourselves to NickServ");
+            $con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS");
+        }
+        for my $channel (@CHANNELS) {
+            $log->("joining $channel");
+            $con->send_srv(JOIN => $channel);
+        }
     },
     disconnect => sub {
-		$log->("disconnected, signalling shutdown");
+        $log->("disconnected, signalling shutdown");
         $c->broadcast;
     },
     join => sub {
         return if not pop @_;
-		my $channel = pop @_;
-		$log->("joined $channel");
+        my $channel = pop @_;
+        $log->("joined $channel");
         $joined{$channel} = 1;
     },
     ctcp_action => sub {
         my (undef, $from, $channel, $msg, $type) = @_;
-		return unless $type eq "PRIVMSG";
+        return unless $type eq "PRIVMSG";
 
-		return unless $channel =~ m/^#/;
-		if (not $joined{$channel}) {
-			$log->("got message on $channel, but not joined, ignoring: $msg");
-			return;
-		}
+        return unless $channel =~ m/^#/;
+        if (not $joined{$channel}) {
+            $log->("got message on $channel, but not joined, ignoring: $msg");
+            return;
+        }
 
-		for my $plugin (@plugins) {
-			$plugin->publicmsg($con, $channel, $from, $msg, 0) if $plugin->enabled;
-		}
+        for my $plugin (@plugins) {
+            $plugin->publicmsg($con, $channel, $from, $msg, 0) if $plugin->enabled;
+        }
     },
     publicmsg => sub {
         my $ircmsg = pop @_;
         my ($channel, $msg) = @{$ircmsg->{params}};
 
-		if (not $joined{$channel}) {
-			$log->("got message on $channel, but not joined, ignoring: $msg");
-			return;
-		}
+        if (not $joined{$channel}) {
+            $log->("got message on $channel, but not joined, ignoring: $msg");
+            return;
+        }
 
         my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
         my ($text) = $msg =~ m/^$NICK\b.?\s*(.*)/i;
