@@ -63,6 +63,20 @@ $con->reg_cb(
 		$log->("joined $channel");
         $joined{$channel} = 1;
     },
+    ctcp_action => sub {
+        my (undef, $from, $channel, $msg, $type) = @_;
+		return unless $type eq "PRIVMSG";
+
+		return unless $channel =~ m/^#/;
+		if (not $joined{$channel}) {
+			$log->("got message on $channel, but not joined, ignoring: $msg");
+			return;
+		}
+
+		for my $plugin (@plugins) {
+			$plugin->publicmsg($con, $channel, $from, $msg, 0) if $plugin->enabled;
+		}
+    },
     publicmsg => sub {
         my $ircmsg = pop @_;
         my ($channel, $msg) = @{$ircmsg->{params}};
