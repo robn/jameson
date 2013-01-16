@@ -17,12 +17,24 @@ my $COMMIT_BASE = "$API_BASE/commits";
 
 my $USER_COMMIT_BASE = "https://github.com/pioneerspacesim/pioneer/commit";
 
+my $timeout = 300;
+my %last_issue_time;
+my %last_ref_time;
+
 sub publicmsg {
     my ($self, $con, $channel, $from, $text, $direct) = @_;
 
     my @issues = uniq map { 0+$_} $text =~ m/(?:\G|^|[\s\W])#(\d+)(?=$|[\s\W])/g;
 
     for my $issue (@issues) {
+		my $now = time;
+		my $time_left = $now - ($last_issue_time{$issue} // 0);
+		if ($time_left < $timeout) {
+			$self->log(sprintf "not refetching issue #$issue, %ds remaining", $timeout - $time_left);
+			next;
+		}
+		$last_issue_time{$issue} = $now;
+
         $self->log("fetching issue #$issue");
 
         http_get("$ISSUE_BASE/$issue", sub {
@@ -51,6 +63,14 @@ sub publicmsg {
     my @refs = uniq map { lc } $text =~ m/(?:^|\s)\@([0-9a-fA-F]{7,})(?:\s|$)/g;
 
     for my $ref (@refs) {
+		my $now = time;
+		my $time_left = $now - ($last_ref_time{$ref} // 0);
+		if ($time_left < $timeout) {
+			$self->log(sprintf "not refetching ref \@$ref, %ds remaining", $timeout - $time_left);
+			next;
+		}
+		$last_ref_time{$ref} = $now;
+
         $self->log("fetching ref \@$ref");
 
         http_get("$COMMIT_BASE/$ref", sub {
