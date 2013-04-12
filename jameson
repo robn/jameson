@@ -89,6 +89,10 @@ $con->reg_cb(
         my (undef, $from) = $con->split_nick_mode($ircmsg->{prefix});
         my ($text) = $msg =~ m/^$NICK\b.?\s*(.*)/i;
 
+        # ignore the github bot
+        # XXX this is a dumb way to do it
+        return if $from eq "Pioneer";
+
         my $direct = 1;
         if (not $text) {
             $text = $msg;
