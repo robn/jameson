@@ -68,9 +68,8 @@ sub init {
                         $self->log("got $d->{event} event, forwarding to channel");
 
                         my ($event) = $d->{event} =~ m/:(.+)$/;
-                        for my $channel (keys %channels) {
-                            $con->send_srv(PRIVMSG => $channel, "$event: $d->{data}");
-                        }
+                        my $channel = "#$d->{channel}";
+                        $con->send_srv(PRIVMSG => $channel, "$event: $d->{data}") if $channels{$channel};
                     }
 
                     default {
