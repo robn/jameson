@@ -62,6 +62,10 @@ $con->reg_cb(
         my $channel = pop @_;
         $log->("joined $channel");
         $joined{$channel} = 1;
+
+        for my $plugin (@plugins) {
+            $plugin->joined($con, $channel) if $plugin->enabled;
+        }
     },
     ctcp_action => sub {
         my (undef, $from, $channel, $msg, $type) = @_;
@@ -165,3 +169,4 @@ sub enabled { 1 }
 
 sub init {}
 sub publicmsg {}
+sub joined {}
