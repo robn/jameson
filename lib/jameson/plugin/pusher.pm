@@ -65,11 +65,48 @@ sub init {
                     }
 
                     when (/jameson:/) {
-                        $self->log("got $d->{event} event, forwarding to channel");
-
                         my ($event) = $d->{event} =~ m/:(.+)$/;
                         my $channel = "#$d->{channel}";
-                        $con->send_srv(PRIVMSG => $channel, "$event: $d->{data}") if $channels{$channel};
+
+                        $self->log("got $event event for $channel, forwarding");
+
+                        unless ($channels{$channel}) {
+                            $self->log("not in channel, dropping");
+                            return;
+                        }
+
+                        my $finished_cb = sub {
+                            my ($text) = @_;
+                            $con->send_srv(PRIVMSG => $channel, "$event: $text");
+                        };
+
+                        my @urls = do {
+                            my @u;
+                            my $text = $d->{data};
+                            URI::Find->new(sub { push @u, pop @_ })->find(\$text);
+                            @u;
+                        };
+
+                        my $text = $d->{data};
+
+                        if (!@urls) {
+                            $finished_cb->($text);
+                        }
+
+                        else {
+                            my %shortened;
+                            for my $url (@urls) {
+                                my $shorten_cb = sub {
+                                    my ($shorturl) = @_;
+                                    $shortened{$url} = $shorturl;
+                                    if (keys %shortened == @urls) {
+                                        $text =~ s/$_/$shortened{$_}/ge for @urls;
+                                        $finished_cb->($text);
+                                    }
+                                };
+                                jameson::util::shorten($url, $shorten_cb);
+                            }
+                        }
                     }
 
                     default {
