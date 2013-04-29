@@ -20,7 +20,7 @@ sub publicmsg {
         $self->log("requesting $url");
 
         my $chunk;
-        http_get($url, on_body => sub {
+        http_get($url, headers => { "User-Agent" => "jameson/0.01" }, on_body => sub {
             my ($body, $hdr)  = @_;
             $chunk = $body;
             $self->log(sprintf "received %d bytes", length $chunk);
