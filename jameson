@@ -34,16 +34,19 @@ my @CHANNELS = split ',', $CHANNELS;
 AnyEvent::Log::ctx->log_cb(sub { print STDOUT shift; 0 });
 my $log = AnyEvent::Log::logger("info");
 
-my $c = AnyEvent->condvar;
+my $c;
+my $condvar = sub { $c };
 
 my $timer;
 my $con = new AnyEvent::IRC::Client;
 
 my %joined;
+my $tries = 3;
 
 $con->reg_cb(
     registered => sub {
-        $log->("registered");
+        $log->("registered, resetting connection counter");
+        $tries = 4;
         if ($NSPASS) {
             $log->("identifying ourselves to NickServ");
             $con->send_srv(PRIVMSG => "NickServ", "IDENTIFY $NSPASS");
@@ -53,9 +56,15 @@ $con->reg_cb(
             $con->send_srv(JOIN => $channel);
         }
     },
+    connect => sub {
+        my (undef, $err) = @_;
+        return unless $err;
+        $log->("connect failed: $err");
+        $condvar->()->send;
+    },
     disconnect => sub {
-        $log->("disconnected, signalling shutdown");
-        $c->broadcast;
+        $log->("disconnected");
+        $condvar->()->send;
     },
     join => sub {
         return if not pop @_;
@@ -108,20 +117,25 @@ $con->reg_cb(
         }
     },
 );
+$con->enable_ping(5, sub {
+    $log->("ping failed, attempting reconnect");
+    $c->send;
+});
 
-$log->("connecting to $HOST:$PORT as $NICK");
-                                                                                                ;
-$con->connect ($HOST, $PORT, { nick => $NICK });
+while ($tries > 0) {
+    $c = AnyEvent::CondVar->new;
+    $log->("connecting to $HOST:$PORT as $NICK ($tries attempts remain)");
+    $con->connect($HOST, $PORT, { nick => $NICK });
+    $log->("entering main loop");
+    $c->recv;
+    $log->("got shutdown signal");
+    $con->disconnect if $con->is_connected;
+    $tries--;
+}
 
-$log->("entering main loop");
+$log->("no tries remaining, exiting");
 
-$c->wait;
-
-$log->("shutdown triggered");
-
-$con->disconnect;
-
-$log->("exiting");
+exit 0;
 
 
 package jameson::util;
