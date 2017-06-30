@@ -1,0 +1,9 @@
+requires 'AnyEvent';
+requires 'AnyEvent::HTTP';
+requires 'AnyEvent::IRC::Client';
+requires 'Chatbot::Eliza';
+requires 'Protocol::WebSocket::Handshake::Client';
+requires 'Git::Repository';
+requires 'DateTime::Format::ISO8601';
+requires 'Module::Pluggable';
+requires 'Lingua::EN::Inflect';
